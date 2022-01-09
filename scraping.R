@@ -13,9 +13,14 @@ page_result_start <- 0 # starting page
 page_result_end <- 40 # last page results
 page_results <- seq(from = page_result_start, to = page_result_end, by = 10)
 full_df <- data.frame()
+
+
+
+##########CODE STARTS HERE
+
 for(i in seq_along(page_results)) {
     #select in indeed the title and area
-    first_page_url <- "https://es.indeed.com/jobs?q=%22commercial+operations%22+OR+%22sales+operations%22&l=Madrid"
+    first_page_url <- "https://es.indeed.com/jobs?q=%22data+scientist%22&l=Madrid"
     url <- paste0(first_page_url, "&start=", page_results[i])
     #parse the page: read in the code from the webpage and break it down into different elements (<div>, <span>, <p>, etc.) for you to analyse it.
     page_full <- xml2::read_html(url)    
@@ -23,9 +28,10 @@ for(i in seq_along(page_results)) {
     # Putting it there avoids error messages such as "Error in open.connection(con, "rb") : Timeout was reached"
     sleep <- sample(3:8, 1)
     Sys.sleep(sleep)
+
     ####   STEP BY STEP EXPLANATION HERE, FULL CODE BELOW 
     #now, righ click on the web page and select "inspect"to see the elements we want to scrap
-    # Xpath: a path to specificly extract certain parts from a tree-structured document such as XML or HTML.
+    # Xpath: a path to specifically extract certain parts from a tree-structured document such as XML or HTML.
     # CSS Selectors:  similar function to xpath, locating certain nodes in a document and extracting information from these nodes. 
     # Every CSS selector can be translated into an equivalent xpath but not the other way around.
     
@@ -89,6 +95,8 @@ for(i in seq_along(page_results)) {
     df <- data.frame(job_title, company_name, job_location, links, job_description)
     full_df <- rbind(full_df, df)
 }
+
+###############CODE ENDS HERE
 
 write.csv (full_df, "commops_madrid_june_21.csv", eol = "\r")
 

@@ -15,7 +15,6 @@ page_results <- seq(from = page_result_start, to = page_result_end, by = 10)
 full_df <- data.frame()
 
 
-
 ##########CODE STARTS HERE
 
 for(i in seq_along(page_results)) {
@@ -35,8 +34,9 @@ for(i in seq_along(page_results)) {
     # CSS Selectors:  similar function to xpath, locating certain nodes in a document and extracting information from these nodes. 
     # Every CSS selector can be translated into an equivalent xpath but not the other way around.
     
+    ## \\\
+    #this is no longer working since the structure of data has changed. 
     # example: syntax of a xml path works: //tagname[@attribute = “value“]
-    
     # indeed: Here we can see that there is an attribute data-tn-element which value is ”jobTitle“.
     #This particular attribute is under the anchor node. So let’s construct the xpath:
     # //a[@data-tn-element = “jobTitle“].
@@ -50,24 +50,33 @@ for(i in seq_along(page_results)) {
     # From there, we grabbed the “title” attribute and extracted the information.
     
     #get the job title use xpath
-    job_title <- page_full %>% 
-        rvest::html_nodes("div") %>%
-        rvest::html_nodes(xpath = '//a[@data-tn-element = "jobTitle"]') %>%
-        rvest::html_attr("title")
-
-    #get the comapny name using CSS node
-    company_name <- page_full %>% 
-        rvest::html_nodes("span")  %>% 
-        rvest::html_nodes(xpath = '//*[@class="company"]')  %>% 
-        rvest::html_text() %>%
-        stringi::stri_trim_both()
+    #job_title <- page_full %>% 
+    #    rvest::html_nodes("div") %>%
+    #    rvest::html_nodes(xpath = '//a[@data-tn-element = "jobTitle"]') %>%
+    #    rvest::html_attr("title")
+    
+    ## ///
+    
+    #get the job title using CSS node
+    #job_title <- page_full %>% 
+        #rvest::html_nodes("span") %>%
+        #rvest::html_nodes(xpath = '//*[@class = "jobTitle"]') %>%
+        #rvest::html_text() %>%
+        #stringi::stri_trim_both()
+        
+    #get the company name using CSS node
+    #company_name <- page_full %>% 
+        #rvest::html_nodes("span")  %>% 
+        #rvest::html_nodes(xpath = '//*[@class="companyName"]')  %>% 
+        #rvest::html_text() %>%
+        #stringi::stri_trim_both()
     
     #get job location
-    job_location <- page_full %>% 
-        rvest::html_nodes("span") %>% 
-        rvest::html_nodes(xpath = '//*[@class="location accessible-contrast-color-location"]')%>% 
-        rvest::html_text() %>%
-        stringi::stri_trim_both()
+    #job_location <- page_full %>% 
+    #rvest::html_nodes("span") %>% 
+    #rvest::html_nodes(xpath = '//*[@class="companyLocation"]')%>% 
+    #rvest::html_text() %>%
+    #stringi::stri_trim_both()
     # Lastly, we want to get the job description from every single job on the website. 
     # You’ll notice, that on the current page, there is just a little meta description of the 
     # job summary. However, we want to get the full description of how many years of experience 
@@ -75,42 +84,64 @@ for(i in seq_along(page_results)) {
     # In order to do that we have to collect the links on the website
     
     # get links xpath
-    links <- page_full %>% 
-        rvest::html_nodes("div") %>%
-        rvest::html_nodes(xpath = '//*[@data-tn-element="jobTitle"]') %>%
-        rvest::html_attr("href")
+
+    
+   links <- page_full %>% 
+       rvest::html_nodes(xpath = '//a[@id]') %>% 
+       rvest::html_attr("href")
+
+   links <- grep("^/rc/clk", links, value = T)
+ 
+   
     #we now need to inspect the offer content, by clicking in the link
     # get job description xpath   
-    job_description <- c()
-    for(i in seq_along(links)) {
-        url <- paste0("https://es.indeed.com", links[i])
-        page_full <- xml2::read_html(url)
-        job_description[[i]] <- page_full %>%
-            rvest::html_nodes("span")  %>% 
-            rvest::html_nodes(xpath = '//*[@class="jobsearch-JobComponent-description icl-u-xs-mt--md"]') %>% 
-            rvest::html_text() %>%
-            stringi::stri_trim_both()
-        }
-    job_description <-unlist(job_description)
-    df <- data.frame(job_title, company_name, job_location, links, job_description)
-    full_df <- rbind(full_df, df)
+ 
+
+##############new
+
+job_description <- c()
+job_location <- c()
+company_name <- c()
+job_title <- c()
+for(i in seq_along(links)) {
+    url <- paste0("https://es.indeed.com", links[i])
+    page_full <- xml2::read_html(url)
+    job_description[[i]] <- page_full %>%
+        rvest::html_nodes("span")  %>% 
+        rvest::html_nodes(xpath = '//*[@class="jobsearch-JobComponent-description icl-u-xs-mt--md"]') %>% 
+        rvest::html_text() %>%
+        stringi::stri_trim_both()
+    company_name [[i]]<- page_full %>% 
+        rvest::html_nodes("span")  %>% 
+        rvest::html_nodes(xpath = '//*[@class="icl-u-lg-mr--sm icl-u-xs-mr--xs"]')  %>% 
+        rvest::html_text() %>%
+        stringi::stri_trim_both()
+    job_location [[i]] <- page_full %>% 
+        rvest::html_nodes("span") %>% 
+        rvest::html_nodes(xpath = '//*[@class="icl-u-lg-mr--sm icl-u-xs-mr--xs"]')%>% 
+        rvest::html_text() %>%
+        stringi::stri_trim_both()
+    job_title [[i]]<- page_full %>% 
+        rvest::html_nodes("span") %>%
+        rvest::html_nodes(xpath = '//*[@class = "icl-u-xs-mb--xs icl-u-xs-mt--none jobsearch-JobInfoHeader-title"]') %>%
+        rvest::html_text() %>%
+        stringi::stri_trim_both()
 }
 
+job_description <-unlist(job_description)
+job_location <-unlist(job_location)
+company_name <-unlist(company_name)
+job_title <-unlist(job_title)
+df <- data.frame(job_title, company_name, job_location, links, job_description)
+full_df <- rbind(full_df, df)
+}
 ###############CODE ENDS HERE
 
+
+#####
 write.csv (full_df, "commops_madrid_june_21.csv", eol = "\r")
 
 
 # create a test DB
 test_df <- full_df
 
-
-### TEXT EXTRACTION ##########
-
-full_df_analysis <- full_df %>% 
-    mutate(english = 
-               stringr::str_extract(full_df,
-                                    regex("(?<=Amadeus\\swill\\spay).+?(?=in\\scontrast)", dotall = TRUE, ignore_case = TRUE))) %>% 
-    mutate(bonus = stringr::str_extract(bonus,"(€|EUR)?\\s?[0-9]+(,|\\.)[0-9]+\\s?(€|EUR)?")) %>% 
-    mutate(bonus = stringr::str_squish(bonus)) %>% 
-    mutate(bonus= replace_na(bonus, "No signature bonus string"))

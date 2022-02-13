@@ -172,28 +172,30 @@ pre code {
 </div>
 
 
-<pre class="r"><code>#https://thatdatatho.com/web-scraping-indeed-jobs-r-rvest/
-
-library(tidyverse)
+<pre class="r"><code>library(&#39;rmarkdown&#39;)
+#rmarkdown::render(&quot;scraping.R&quot;, &quot;html_document&quot;)</code></pre>
+<p>adapted from <a href="https://thatdatatho.com/web-scraping-indeed-jobs-r-rvest/" class="uri">https://thatdatatho.com/web-scraping-indeed-jobs-r-rvest/</a></p>
+<pre class="r"><code>library(tidyverse)
 library(rvest)
 library(xml2)
 
 
-##################              full code     ####
-# we have to implement in our scraper are multiple page results.
-# We need to look at the # of pages manually
+#Defining a sequence with the number of pages to scrap.
+# In this proof of concept we look at the # of pages manually
 
 page_result_start &lt;- 0 # starting page 
 page_result_end &lt;- 40 # last page results
 page_results &lt;- seq(from = page_result_start, to = page_result_end, by = 10)
 full_df &lt;- data.frame()
 
+#select job title and city
+title &lt;- &quot;Business+analyst&quot; #fill in job title with words separated by &quot;+&quot;
+city &lt;- &quot;Madrid&quot;#fill in city
+first_page_url &lt;- paste0(&quot;https://es.indeed.com/jobs?q=%22&quot;,title,&quot;%22&amp;l=&quot;,city)
 
-##########CODE STARTS HERE
+# Function to extract query results (read_html), and create a dataframe with the desired fields. 
 
 for(i in seq_along(page_results)) {
-    #select in indeed the title and area
-    first_page_url &lt;- &quot;https://es.indeed.com/jobs?q=%22business+analyst%22&amp;l=Madrid&quot;
     url &lt;- paste0(first_page_url, &quot;&amp;start=&quot;, page_results[i])
     #parse the page: read in the code from the webpage and break it down into different elements (&lt;div&gt;, &lt;span&gt;, &lt;p&gt;, etc.) for you to analyse it.
     page_full &lt;- xml2::read_html(url)    
@@ -202,82 +204,17 @@ for(i in seq_along(page_results)) {
     sleep &lt;- sample(3:8, 1)
     Sys.sleep(sleep)
 
-    ####   STEP BY STEP EXPLANATION HERE, FULL CODE BELOW 
-    #now, righ click on the web page and select &quot;inspect&quot;to see the elements we want to scrap
-    # Xpath: a path to specifically extract certain parts from a tree-structured document such as XML or HTML.
-    # CSS Selectors:  similar function to xpath, locating certain nodes in a document and extracting information from these nodes. 
-    # Every CSS selector can be translated into an equivalent xpath but not the other way around.
-    
-    ## \\\
-    #this is no longer working since the structure of data has changed. 
-    # example: syntax of a xml path works: //tagname[@attribute = “value“]
-    # indeed: Here we can see that there is an attribute data-tn-element which value is ”jobTitle“.
-    #This particular attribute is under the anchor node. So let’s construct the xpath:
-    # //a[@data-tn-element = “jobTitle“].
-    # And voila we get all job titles. You’ll notice that we have included //* instead of //a 
-    #in our code below. The star acts as a wildcard and selects all elements or nodes not just 
-    # the anchor node. For Indeed’s website, the attribute data-tn-element is always under 
-    # the anchor node so the wild card symbol wouldn’t be necessary.
-    
-    #We looked at the source code and identified that the jobtitle is located within the
-    # anchor &lt;a&gt; and &lt;div&gt; nodes. Then we looked at the attribute data-tn-element with the value “jobTitle“.
-    # From there, we grabbed the “title” attribute and extracted the information.
-    
-    #get the job title use xpath
-    #job_title &lt;- page_full %&gt;% 
-    #    rvest::html_nodes(&quot;div&quot;) %&gt;%
-    #    rvest::html_nodes(xpath = &#39;//a[@data-tn-element = &quot;jobTitle&quot;]&#39;) %&gt;%
-    #    rvest::html_attr(&quot;title&quot;)
-    
-    ## ///
-    ## /// the hidden code below is now included in the main function to avoid missmatch between data extractions.
-    #get the job title using CSS node
-    #job_title &lt;- page_full %&gt;% 
-        #rvest::html_nodes(&quot;span&quot;) %&gt;%
-        #rvest::html_nodes(xpath = &#39;//*[@class = &quot;jobTitle&quot;]&#39;) %&gt;%
-        #rvest::html_text() %&gt;%
-        #stringi::stri_trim_both()
-        
-    #get the company name using CSS node
-    #company_name &lt;- page_full %&gt;% 
-        #rvest::html_nodes(&quot;span&quot;)  %&gt;% 
-        #rvest::html_nodes(xpath = &#39;//*[@class=&quot;companyName&quot;]&#39;)  %&gt;% 
-        #rvest::html_text() %&gt;%
-        #stringi::stri_trim_both()
-    
-    #get job location
-    #job_location &lt;- page_full %&gt;% 
-    #rvest::html_nodes(&quot;span&quot;) %&gt;% 
-    #rvest::html_nodes(xpath = &#39;//*[@class=&quot;companyLocation&quot;]&#39;)%&gt;% 
-    #rvest::html_text() %&gt;%
-    #stringi::stri_trim_both()
-    # Lastly, we want to get the job description from every single job on the website. 
-    # You’ll notice, that on the current page, there is just a little meta description of the 
-    # job summary. However, we want to get the full description of how many years of experience 
-    # we need, what skill set is required, and what responsibilities the job entails.
-    # In order to do that we have to collect the links on the website
-    
-    # get links xpath
-
-    
    links &lt;- page_full %&gt;% 
        rvest::html_nodes(xpath = &#39;//a[@id]&#39;) %&gt;% 
        rvest::html_attr(&quot;href&quot;)
    
-   # remove non relevant links
+# remove non relevant links with regex and create variable&#39;s placeholder
    links &lt;- grep(&quot;^/rc/clk&quot;, links, value = T)
  
-   
-    #we now need to inspect the offer content, by clicking in the link
-    # get job description xpath   
- 
-
-##############new
-
-job_description &lt;- c()
-job_location &lt;- c()
-company_name &lt;- c()
-job_title &lt;- c()
+    job_description &lt;- c()
+    job_location &lt;- c()
+    company_name &lt;- c()
+    job_title &lt;- c()
 
 for(i in seq_along(links)) {
     url &lt;- paste0(&quot;https://es.indeed.com&quot;, links[i])
@@ -292,34 +229,86 @@ for(i in seq_along(links)) {
         rvest::html_nodes(xpath = &#39;//*[@class=&quot;icl-u-lg-mr--sm icl-u-xs-mr--xs&quot;]&#39;)  %&gt;% 
         rvest::html_text() %&gt;%
         stringi::stri_trim_both()
-    job_location [[i]] &lt;- page_full %&gt;% 
-        rvest::html_nodes(&quot;span&quot;) %&gt;% 
-        rvest::html_nodes(xpath = &#39;//*[@class=&quot;icl-u-lg-mr--sm icl-u-xs-mr--xs&quot;]&#39;)%&gt;% 
-        rvest::html_text() %&gt;%
-        stringi::stri_trim_both()
     job_title [[i]]&lt;- page_full %&gt;% 
         rvest::html_nodes(&quot;span&quot;) %&gt;%
         rvest::html_nodes(xpath = &#39;//*[@class = &quot;icl-u-xs-mb--xs icl-u-xs-mt--none jobsearch-JobInfoHeader-title&quot;]&#39;) %&gt;%
         rvest::html_text() %&gt;%
         stringi::stri_trim_both()
+    }
+#create the dataframe
+    job_description &lt;-unlist(job_description)
+    company_name &lt;-unlist(company_name)
+    job_title &lt;-unlist(job_title)
+    df &lt;- data.frame(job_title, company_name, links, job_description)
+    full_df &lt;- rbind(full_df, df)
 }
 
-job_description &lt;-unlist(job_description)
-job_location &lt;-unlist(job_location)
-company_name &lt;-unlist(company_name)
-job_title &lt;-unlist(job_title)
-df &lt;- data.frame(job_title, company_name, job_location, links, job_description)
-full_df &lt;- rbind(full_df, df)
-}
+#remove duplicated jobs based on exact description
+full_df &lt;- full_df %&gt;% distinct(job_description, .keep_all= TRUE)
 ###############CODE ENDS HERE
 
 
 #####
-write.csv (full_df, &quot;business_analyst_jan_22.csv&quot;, eol = &quot;\r&quot;)
+
+write.csv (full_df, paste0(title,&quot;_&quot;,city,&quot;_&quot;,Sys.Date(),&quot;.csv&quot;), eol = &quot;\r&quot;)
 getwd()</code></pre>
 <pre><code>## [1] &quot;C:/Users/angeles.jimenez/OneDrive - Amadeus Workplace/Desktop/Folders/R programming/job scraping/job_scraping&quot;</code></pre>
-<pre class="r"><code># create a test DB
-test_df &lt;- full_df</code></pre>
+<pre class="r"><code>####   STEP BY STEP EXPLANATION HERE, FULL CODE BELOW 
+#now, righ click on the web page and select &quot;inspect&quot;to see the elements we want to scrap
+# Xpath: a path to specifically extract certain parts from a tree-structured document such as XML or HTML.
+# CSS Selectors:  similar function to xpath, locating certain nodes in a document and extracting information from these nodes. 
+# Every CSS selector can be translated into an equivalent xpath but not the other way around.
+
+## \\\
+#this is no longer working since the structure of data has changed. 
+# example: syntax of a xml path works: //tagname[@attribute = “value“]
+# indeed: Here we can see that there is an attribute data-tn-element which value is ”jobTitle“.
+#This particular attribute is under the anchor node. So let’s construct the xpath:
+# //a[@data-tn-element = “jobTitle“].
+# And voila we get all job titles. You’ll notice that we have included //* instead of //a 
+#in our code below. The star acts as a wildcard and selects all elements or nodes not just 
+# the anchor node. For Indeed’s website, the attribute data-tn-element is always under 
+# the anchor node so the wild card symbol wouldn’t be necessary.
+
+#We looked at the source code and identified that the jobtitle is located within the
+# anchor &lt;a&gt; and &lt;div&gt; nodes. Then we looked at the attribute data-tn-element with the value “jobTitle“.
+# From there, we grabbed the “title” attribute and extracted the information.
+
+#get the job title use xpath
+#job_title &lt;- page_full %&gt;% 
+#    rvest::html_nodes(&quot;div&quot;) %&gt;%
+#    rvest::html_nodes(xpath = &#39;//a[@data-tn-element = &quot;jobTitle&quot;]&#39;) %&gt;%
+#    rvest::html_attr(&quot;title&quot;)
+
+## ///
+## /// the hidden code below is now included in the main function to avoid missmatch between data extractions.
+#get the job title using CSS node
+#job_title &lt;- page_full %&gt;% 
+#rvest::html_nodes(&quot;span&quot;) %&gt;%
+#rvest::html_nodes(xpath = &#39;//*[@class = &quot;jobTitle&quot;]&#39;) %&gt;%
+#rvest::html_text() %&gt;%
+#stringi::stri_trim_both()
+
+#get the company name using CSS node
+#company_name &lt;- page_full %&gt;% 
+#rvest::html_nodes(&quot;span&quot;)  %&gt;% 
+#rvest::html_nodes(xpath = &#39;//*[@class=&quot;companyName&quot;]&#39;)  %&gt;% 
+#rvest::html_text() %&gt;%
+#stringi::stri_trim_both()
+
+#get job location
+#job_location &lt;- page_full %&gt;% 
+#rvest::html_nodes(&quot;span&quot;) %&gt;% 
+#rvest::html_nodes(xpath = &#39;//*[@class=&quot;companyLocation&quot;]&#39;)%&gt;% 
+#rvest::html_text() %&gt;%
+#stringi::stri_trim_both()
+# Lastly, we want to get the job description from every single job on the website. 
+# You’ll notice, that on the current page, there is just a little meta description of the 
+# job summary. However, we want to get the full description of how many years of experience 
+# we need, what skill set is required, and what responsibilities the job entails.
+# In order to do that we have to collect the links on the website
+
+# get links xpath</code></pre>
 
 
 

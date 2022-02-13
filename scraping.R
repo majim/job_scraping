@@ -77,6 +77,8 @@ for(i in seq_along(links)) {
 
 #remove duplicated jobs based on exact description
 full_df <- full_df %>% distinct(job_description, .keep_all= TRUE)
+
+tbl_df (full_df)
 ###############CODE ENDS HERE
 
 

@@ -1,5 +1,5 @@
-rmarkdown::render("scraping.R", "html_document")
-
+library('rmarkdown')
+#rmarkdown::render("scraping.R", "html_document")
 #' ---
 #' title: "Jobscraping search by position and city"
 #' author: "Angeles Jimenez"

@@ -175,9 +175,28 @@ pre code {
 <pre class="r"><code>library(&#39;rmarkdown&#39;)
 #rmarkdown::render(&quot;scraping.R&quot;, &quot;html_document&quot;)</code></pre>
 <p>adapted from <a href="https://thatdatatho.com/web-scraping-indeed-jobs-r-rvest/" class="uri">https://thatdatatho.com/web-scraping-indeed-jobs-r-rvest/</a></p>
-<pre class="r"><code>library(tidyverse)
-library(rvest)
-library(xml2)
+<pre class="r"><code>library(tidyverse)</code></pre>
+<pre><code>## Warning: package &#39;tidyverse&#39; was built under R version 4.0.3</code></pre>
+<pre><code>## -- Attaching packages ----------------------------------------------------- tidyverse 1.3.0 --</code></pre>
+<pre><code>## v ggplot2 3.3.2     v purrr   0.3.4
+## v tibble  3.0.3     v dplyr   1.0.2
+## v tidyr   1.1.2     v stringr 1.4.0
+## v readr   1.3.1     v forcats 0.5.0</code></pre>
+<pre><code>## Warning: package &#39;ggplot2&#39; was built under R version 4.0.3</code></pre>
+<pre><code>## -- Conflicts -------------------------------------------------------- tidyverse_conflicts() --
+## x dplyr::filter() masks stats::filter()
+## x dplyr::lag()    masks stats::lag()</code></pre>
+<pre class="r"><code>library(rvest)</code></pre>
+<pre><code>## Loading required package: xml2</code></pre>
+<pre><code>## 
+## Attaching package: &#39;rvest&#39;</code></pre>
+<pre><code>## The following object is masked from &#39;package:purrr&#39;:
+## 
+##     pluck</code></pre>
+<pre><code>## The following object is masked from &#39;package:readr&#39;:
+## 
+##     guess_encoding</code></pre>
+<pre class="r"><code>library(xml2)
 
 
 #Defining a sequence with the number of pages to scrap.
@@ -189,7 +208,7 @@ page_results &lt;- seq(from = page_result_start, to = page_result_end, by = 10)
 full_df &lt;- data.frame()
 
 #select job title and city
-title &lt;- &quot;Business+analyst&quot; #fill in job title with words separated by &quot;+&quot;
+title &lt;- &quot;data+scientist&quot; #fill in job title with words separated by &quot;+&quot;
 city &lt;- &quot;Madrid&quot;#fill in city
 first_page_url &lt;- paste0(&quot;https://es.indeed.com/jobs?q=%22&quot;,title,&quot;%22&amp;l=&quot;,city)
 
@@ -201,7 +220,7 @@ for(i in seq_along(page_results)) {
     page_full &lt;- xml2::read_html(url)    
     # Sys.sleep pauses R for random number of seconds before it resumes
     # Putting it there avoids error messages such as &quot;Error in open.connection(con, &quot;rb&quot;) : Timeout was reached&quot;
-    sleep &lt;- sample(3:8, 1)
+    sleep &lt;- sample(1:125, 1)
     Sys.sleep(sleep)
 
    links &lt;- page_full %&gt;% 
@@ -245,7 +264,25 @@ for(i in seq_along(links)) {
 
 #remove duplicated jobs based on exact description
 full_df &lt;- full_df %&gt;% distinct(job_description, .keep_all= TRUE)
-###############CODE ENDS HERE
+
+tbl_df (full_df)</code></pre>
+<pre><code>## Warning: `tbl_df()` was deprecated in dplyr 1.0.0.
+## Please use `tibble::as_tibble()` instead.</code></pre>
+<pre><code>## # A tibble: 57 x 4
+##    job_title                company_name     links            job_description                 
+##    &lt;chr&gt;                    &lt;chr&gt;            &lt;chr&gt;            &lt;chr&gt;                           
+##  1 Beca Data Scientist y B~ &quot;&quot;               /rc/clk?jk=1f7f~ &quot;Dentro de nuestra Dirección de~
+##  2 Data Scientist           &quot;&quot;               /rc/clk?jk=5983~ &quot;Contribuirás a acabar con el h~
+##  3 Data Scientist, Food Di~ &quot;&quot;               /rc/clk?jk=bf36~ &quot;WHO WE ARE AND WHY YOU SHOULD ~
+##  4 Data Scientist           &quot;Accion Contra ~ /rc/clk?jk=046c~ &quot;We are looking to hire a full ~
+##  5 Data Scientist           &quot;&quot;               /rc/clk?jk=c17a~ &quot;Madrid\nTodas las vacantes abi~
+##  6 Becario de Data Scienti~ &quot;IKEA&quot;           /rc/clk?jk=86d7~ &quot;Quienes somos\n\nEn indigitall~
+##  7 Data Scientist Intern    &quot;&quot;               /rc/clk?jk=ca37~ &quot;We are looking for an enthusia~
+##  8 Data scientist Junior    &quot;SpotLab&quot;        /rc/clk?jk=5d60~ &quot;Descripción de la empresa\n¿Qu~
+##  9 Data Scientist/Científi~ &quot;&quot;               /rc/clk?jk=4833~ &quot;Data Scientist/Científico de D~
+## 10 DATA SCIENTIST           &quot;BBVA Next Tech~ /rc/clk?jk=d8ff~ &quot;Actualmente buscamos un Data S~
+## # ... with 47 more rows</code></pre>
+<pre class="r"><code>###############CODE ENDS HERE
 
 
 #####

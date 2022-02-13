@@ -21,7 +21,7 @@ page_results <- seq(from = page_result_start, to = page_result_end, by = 10)
 full_df <- data.frame()
 
 #select job title and city
-title <- "Business+analyst" #fill in job title with words separated by "+"
+title <- "data+scientist" #fill in job title with words separated by "+"
 city <- "Madrid"#fill in city
 first_page_url <- paste0("https://es.indeed.com/jobs?q=%22",title,"%22&l=",city)
 
@@ -33,7 +33,7 @@ for(i in seq_along(page_results)) {
     page_full <- xml2::read_html(url)    
     # Sys.sleep pauses R for random number of seconds before it resumes
     # Putting it there avoids error messages such as "Error in open.connection(con, "rb") : Timeout was reached"
-    sleep <- sample(3:8, 1)
+    sleep <- sample(1:125, 1)
     Sys.sleep(sleep)
 
    links <- page_full %>% 
